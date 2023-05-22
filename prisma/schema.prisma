@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ERole {
+  ADMIN
+  BUSINESS
+  CLIENT
+}
+
+enum EUserStatus {
+  UNVERIFIED
+  VERIFIED
+  DELETED
+  PROVIDED
+  BANNED
+}
+
+enum EPostStatus {
+  FEATURED
+  NOT_FEATURED
+}
+
+enum ELebanonCity {
+  // All
+  LEBANON
+
+  // Beirut
+  BEIRUT
+
+  // Mount Lebanon
+  ALEY
+  BAABDA
+  BASKINTA
+  BEIT_MERY
+  BIKFAYA
+  BSHARRI
+  CHOUF
+  DBAYEH
+  DHOUR_EL_CHOUEIR
+  JBEIL
+  JOUNIEH
+  KESERWAN
+  MATN
+  METN
+  SIN_EL_FIL
+
+  // North Governorate
+  AKKAR
+  BATROUN
+  BCHARRE
+  KOURA
+  MINIEH_DANNIYEH
+  TRIPOLI
+  ZGHARTA
+
+  // South Governorate
+  JEZZINE
+  NABATIYEH
+  SIDON
+  TYRE
+
+  // Bekaa
+  BAALBEK
+  HERMEL
+  RASHAYA
+  WEST_BEKAA
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  firstName String
+  lastName  String
+  email     String      @unique
+  password  String?
+  picture   String?
+  role      ERole       @default(CLIENT)
+  provider  String?
+  status    EUserStatus @default(UNVERIFIED)
+
+  posts    Post[]    @relation("creator")
+  messages Message[] @relation("creator")
+  rooms    Room[]    @relation("Participant")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  creatorId Int
+  creator   User @relation("creator", fields: [creatorId], references: [id])
+
+  title         String
+  description   String?
+  imageUrl      String?
+  status        EPostStatus  @default(NOT_FEATURED)
+  priceInDollar Int          @default(0)
+  location      ELebanonCity @default(LEBANON)
+}
+
+model Room {
+  id        Int      @id @default(autoincrement())
+  updatedAt DateTime @updatedAt()
+
+  messages     Message[]
+  participants User[]    @relation("Participant")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  content   String
+
+  creatorId Int
+  creator   User @relation("creator", fields: [creatorId], references: [id])
+
+  roomId Int
+  room   Room @relation(fields: [roomId], references: [id])
+}
